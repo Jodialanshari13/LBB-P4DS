@@ -1,0 +1,204 @@
+---
+title: "Pelangi Retail"
+author: "Jodi Al Anshari Muttaqi"
+date: "6/6/2020"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: 
+        collapsed: false
+    number_sections: true
+    theme: flatly
+    highlight: zenburn
+    css: assets/style.css
+  fig_caption: yes
+  pdf_document:
+    latex_engine: xelatex
+    fig_caption: yes
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Explanation {.tabset}
+
+## Brief
+Welcome to my Rmd.
+This is my first LBB by using data from Retail.csv
+I hope you can understand it.
+
+## Data's Point of View
+This data contains sales record which include Ship Mode, Segment, Category, the profit or loss, etc. I called it PT. Pelangi Jaya. PT. Pelangi Jaya is a retail company who sells various items like Office equipments, furniture and technology stuff, etc.
+The customers are coming from different segment such as Corporate, Home Office until individual consumer. This company also could provide the convenience services for customers delivery which is suitable with their needs.
+'
+Note : Detail explanatory will be given at the end of content
+
+# Data Input
+```{r}
+# Make sure your data is placed in the same folder with your R project data
+pelangi = read.csv("data_input/retail.csv")
+```
+## Data Inspection
+```{r}
+head(pelangi)
+```
+
+
+```{r}
+tail(pelangi)
+```
+
+
+```{r}
+dim(pelangi)
+```
+```{r}
+names(pelangi)
+```
+Based on data inspection above, we can conclude that :
+* Pelangi data contains 9994 of rows and 15 of coloumns
+* Each of column name : “Row.ID”, “Order.ID”, “Order.Date”, “Ship.Date”, “Ship.Mode”, “Customer.ID”, “Segment”,“Product.ID”, “Category”, “Sub.Category”, “Product.Name”, “Sales”, “Quantity”, “Discount”, “Profit”
+
+## Data Cleansing
+```{r}
+# Check data type for each column
+str(pelangi)
+```
+```{r}
+# From this result, we find some of data type not in the corect type. we need to convert it into corect type (data coertion)
+pelangi$Row.ID <- as.character(pelangi$Row.ID)
+pelangi$Order.ID<- as.character (pelangi$Order.ID)
+pelangi$Order.Date<- as.Date(pelangi$Order.Date, "%m/%d/%y")
+pelangi$Ship.Date <- as.Date(pelangi$Ship.Date, "%m/%d/%y")
+pelangi$Customer.ID<-as.character(pelangi$Customer.ID)
+pelangi$Product.ID<- as.character(pelangi$Product.ID)
+pelangi$Product.Name<-as.character(pelangi$Product.Name)
+
+str(pelangi)
+```
+Data type is correct.
+
+```{r}
+#Missing value check
+colSums(is.na(pelangi))
+```
+
+
+```{r}
+anyNA(pelangi)
+```
+Done. No missing value here.
+
+# Data Explanation
+```{r}
+summary(pelangi)
+```
+1. PT. Pelangi Jaya received first order on January 2014 and last order occured on December 2017.
+2. The highest sales was around 22638 and the lowest sales was 0.444.
+3. The average discount received by customer was 15,62%.
+4. PT. Pelangi Jaya got the highest profit of 8399,976 and loss about -6599,978.
+5. The lowest order received was 1 and average order was 3,79.
+
+Check the Outlier by Profit
+```{r}
+aggregate(Profit~Segment,pelangi,mean)
+```
+
+```{r}
+aggregate(Profit~Segment,pelangi,var)
+```
+
+
+```{r}
+aggregate(Profit~Segment,pelangi,sd)
+```
+
+
+```{r}
+boxplot(pelangi$Profit)
+```
+Based on result above, we find some posibilities that there are outliers, but from our calculation, Sd value is around 200 ( my oppinion it can be still be tolerated), so it can be continued.
+
+# Data Manipulation
+
+  1.Which category has the biggest Sales ?
+```{r}
+Big_sales <- aggregate(formula = Sales ~ Category, data = pelangi, FUN = sum)
+Big_sales[order(Big_sales$Sales, decreasing = T),]
+```
+Answer: Technology
+
+2. How many sub categories which is sold more than 10  and using ship mode standard class?
+
+```{r}
+subcat <- pelangi[pelangi$Quantity>10 & pelangi$Ship.Mode=="First Class",]
+subcat
+#10
+```
+Answer: 10
+
+3. Which segment bought most furniture ?
+
+```{r}
+furn <- pelangi[pelangi$Category=="Furniture",]
+round(prop.table(table(furn$Segment))*100,2)
+```
+Answer: Consumer
+
+4. Which category that has max loss ?
+```{r}
+pelangi[pelangi$Profit == min(pelangi$Profit), ]
+```
+Answer: Technology
+
+5. Which sub category that has max profit ?
+```{r}
+pelangi[pelangi$Sales == max(pelangi$Profit), ]
+```
+Answer: Copiers
+
+6. How many phones that PT. Pelangi Jaya sold ?
+```{r}
+phone <- pelangi[pelangi$Sub.Category=="Phones",]
+sum(phone$Quantity)
+```
+7. How much profit did PT. Pelangi Jaya make by selling machines ?
+```{r}
+Machine <- pelangi[pelangi$Sub.Category=="Machines",]
+aggregate(formula= Profit ~ Sub.Category, data = Machine, FUN = sum)
+```
+8. How much profit did PT. Pelangi Jaya make based on segment and ship mode ?
+```{r}
+xtabs(Profit~Segment+Ship.Mode,pelangi)
+```
+9. Which categories were the most sold ?
+```{r}
+xtabs(Quantity~Category,pelangi)
+```
+10. Which sub categories were the most sold ?
+```{r}
+xtabs(Quantity~Sub.Category,pelangi)
+```
+
+11. Which sub category generates max average profit and loss ?
+```{r}
+proflos <- aggregate(formula = Profit ~ Sub.Category, data = pelangi, FUN = mean)
+proflos[order(proflos$Profit, decreasing = T),]
+```
+Copiers and Tables
+
+# Explanatory Text & Business Recomendation
+  
+  Based on the exploratory data analysis above, we can conclude that:
+PT. Pelangi Jaya gains most sales from technology category. Max loss comes from technlogy category.Binders were the best selling in sub category. The company sold more office supplies category than other categories. Standard class was the most commonly used by all segments.
+
+Recomendation:
+
+  1. Sell more copiers because it was proven generating much profit for the company.
+  
+  2. Sell more office supplies because it was proven generating high sales beyond other catgeories.
+  
+  3. Use standard class because it can generate maximum profit and reduce shipping expenses.
+
+
